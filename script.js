@@ -1,10 +1,16 @@
+// ===== CONFIGURATION =====
+// Disable texture packing to fix "resize (packed)" bugs on some GPUs
+if (typeof ort !== 'undefined') {
+    ort.env.webgl.pack = false;
+    ort.env.webgl.contextId = 'webgl2';
+}
+
 // ===== DOM Elements =====
 const inputVideoInput = document.getElementById('input-video');
 const dropZone = document.getElementById('drop-zone');
 const dropZoneText = document.getElementById('drop-zone-text');
 const fileNameDisplay = document.getElementById('file-name-display');
 
-// Removed output elements as requested
 const videoPreview = document.getElementById('video-preview');
 const previewPlayer = document.getElementById('preview-player');
 const videoDuration = document.getElementById('video-duration');
@@ -19,8 +25,6 @@ const pitchValue = document.getElementById('pitch-value');
 
 const detectFaces = document.getElementById('detect-faces');
 const detectPlates = document.getElementById('detect-plates');
-const deviceSelect = document.getElementById('device');
-const blurTypeRadios = document.querySelectorAll('input[name="blur-type"]');
 
 const progressFill = document.getElementById('progress-fill');
 const progressText = document.getElementById('progress-text');
@@ -32,22 +36,23 @@ const startBtnText = document.getElementById('start-btn-text');
 const cancelBtn = document.getElementById('cancel-btn');
 const downloadAgainBtn = document.getElementById('download-again-btn');
 
-const previewAudioBtn = document.getElementById('preview-audio-btn');
-const stopPreviewBtn = document.getElementById('stop-preview-btn');
-
 const toast = document.getElementById('toast');
 const toastMessage = document.getElementById('toast-message');
 
 const langButtons = document.querySelectorAll('.lang-btn');
+const modelUpload = document.getElementById('model-upload');
+const modelLoaderContainer = document.getElementById('model-loader-container');
 
 // ===== Global State =====
 let currentLang = 'fa';
 let isProcessing = false;
 let selectedInputFile = null;
 let yoloSession = null;
-let modelLoading = false;
+let isModelReady = false;
 let lastBlobUrl = null;
-let outputFilename = "processed.mp4"; // Default
+let outputFilename = "processed.mp4";
+let currentModelUrl = './yolo11n.onnx'; // Keep track of URL for fallback
+let usingGPU = true; // Track if we are on GPU or CPU
 
 // ===== Language Data =====
 const translations = {
@@ -64,45 +69,10 @@ const translations = {
         ready: "آماده",
         duration: "مدت:",
         size: "حجم:",
-        seconds: "ثانیه",
-        mb: "مگابایت",
-        errorNoInput: "لطفا ویدیو را انتخاب کنید",
-        errorNoDetection: "حداقل یک گزینه تشخیص را انتخاب کنید",
         statusAudio: "در حال پردازش صدا...",
-        processingSuccess: "پردازش کامل شد",
-        welcomeMessage: "خوش آمدید!",
-
-        // --- Security Section (Updated) ---
-        securityTitle: "🔒 تضمین امنیت و حریم خصوصی",
-        securityText: "برای حفظ امنیت و ناشناس ماندن شما، تمامی پردازش‌ها به صورت <strong>۱۰۰٪ محلی و آفلاین</strong> (Client-Side) در مرورگر شما انجام می‌شود. <br> هیچ ویدیو یا داده‌ای هرگز از دستگاه شما خارج نمی‌شود و به هیچ سروری ارسال نمی‌گردد.",
-        verifyCode: "بررسی کد منبع در گیت‌هاب (Open Source)",
-
-        webDeveloper: "توسعه‌دهنده نسخه وب:",
-        anonContributor: "مشارکت‌کننده ناشناس",
-        thanksNote: "با تشکر از Shin",
-        progress: "پیشرفت",
-        status: "وضعیت:",
-        speed: "سرعت:",
-        settings: "تنظیمات",
-        blurStrength: "قدرت تار کردن:",
-        low: "کم",
-        high: "زیاد",
-        confidence: "اعتماد:",
-        blurType: "نوع تار کردن:",
-        gaussian: "گاوسی",
-        pixelate: "پیکسلی",
-        detect: "تشخیص:",
-        faces: "چهره‌ها",
-        plates: "پلاک‌ها",
-        device: "دستگاه:",
-        auto: "خودکار",
-        cpu: "پردازنده (CPU)",
-        gpu: "کارت گرافیک (GPU)",
-        pitchShift: "تغییر زیر و بم صدا:",
-        semitones: "نیم‌پرده",
-        previewAudio: "پیش‌نمایش صدا",
-        stopPreview: "توقف پیش‌نمایش",
-        credits: "اعتبارات"
+        loadingModel: "در حال بارگذاری مدل...",
+        switchingCPU: "خطای گرافیک. سوییچ به پردازنده (کندتر)...",
+        securityText: "پردازش ۱۰۰٪ محلی."
     },
     en: {
         subtitle: "Blur Faces & License Plates",
@@ -117,45 +87,10 @@ const translations = {
         ready: "Ready",
         duration: "Duration:",
         size: "Size:",
-        seconds: "sec",
-        mb: "MB",
-        errorNoInput: "Please select video",
-        errorNoDetection: "Select detection type",
         statusAudio: "Processing Audio...",
-        processingSuccess: "Processing Complete",
-        welcomeMessage: "Welcome!",
-
-        // --- Security Section (English) ---
-        securityTitle: "🔒 Security & Privacy Guarantee",
-        securityText: "To ensure your security and anonymity, all processing is performed <strong>100% locally and offline</strong> (Client-Side) within your browser. <br> No video or data ever leaves your device or is sent to any server.",
-        verifyCode: "Verify Source Code on GitHub (Open Source)",
-
-        webDeveloper: "Web Developer:",
-        anonContributor: "Anonymous",
-        thanksNote: "Thanks to Shin",
-        progress: "Progress",
-        status: "Status:",
-        speed: "Speed:",
-        settings: "Settings",
-        blurStrength: "Blur Strength:",
-        low: "Low",
-        high: "High",
-        confidence: "Confidence:",
-        blurType: "Blur Type:",
-        gaussian: "Gaussian",
-        pixelate: "Pixelate",
-        detect: "Detect:",
-        faces: "Faces",
-        plates: "License Plates",
-        device: "Device:",
-        auto: "Auto",
-        cpu: "CPU",
-        gpu: "GPU",
-        pitchShift: "Audio Pitch Shift:",
-        semitones: "semitones",
-        previewAudio: "Preview Audio",
-        stopPreview: "Stop Preview",
-        credits: "Credits"
+        loadingModel: "Loading Model...",
+        switchingCPU: "GPU Error. Switching to CPU (Slower)...",
+        securityText: "100% Local Processing."
     }
 };
 
@@ -179,46 +114,63 @@ function formatDuration(seconds) {
 }
 
 function updatePageLanguage(lang) {
-    // Basic text updates
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        if (translations[lang] && translations[lang][key]) {
-            if (key === 'thanksNote') {
-                const shinLink = '<a href="https://x.com/hey_itsmyturn" target="_blank" class="link">Shin</a>';
-                el.innerHTML = lang === 'fa' ? `با تشکر از ${shinLink}` : `Thanks to ${shinLink}`;
-            } else if (key === 'securityText') {
-                // Allows HTML tags like <strong> and <br>
-                el.innerHTML = translations[lang][key];
-            } else {
-                el.textContent = translations[lang][key];
-            }
+        if (translations[lang] && translations[lang][key] && key !== 'securityText') {
+            el.textContent = translations[lang][key];
         }
     });
-
-    // Dynamic text
     if (!selectedInputFile) dropZoneText.textContent = translations[lang].dropText;
-    if (!isProcessing && !lastBlobUrl) statusText.textContent = translations[lang].readyToProcess;
+    updateStartButtonState();
 }
 
+function updateStartButtonState() {
+    if (!isModelReady) {
+        startBtnText.textContent = translations[currentLang].loadingModel;
+        startBtn.disabled = true;
+        startBtn.style.opacity = "0.5";
+        startBtn.style.cursor = "not-allowed";
+    } else {
+        startBtnText.textContent = translations[currentLang].startProcessing;
+        startBtn.disabled = false;
+        startBtn.style.opacity = "1";
+        startBtn.style.cursor = "pointer";
+    }
+}
 
 // ===== Model Loading =====
-const modelUpload = document.getElementById('model-upload');
-const modelLoaderContainer = document.getElementById('model-loader-container');
-
-async function loadModel(file = null) {
-    statusText.textContent = "Loading Model...";
+async function loadModel(file = null, forceCPU = false) {
+    isModelReady = false;
+    updateStartButtonState();
+    statusText.textContent = translations[currentLang].loadingModel;
+    
     try {
-        let modelUrl = file ? URL.createObjectURL(file) : './yolo11n.onnx';
-        yoloSession = await ort.InferenceSession.create(modelUrl, {
-            executionProviders: ['wasm'],
+        currentModelUrl = file ? URL.createObjectURL(file) : currentModelUrl;
+        
+        // Options: Try GPU first, unless forceCPU is true
+        const providers = forceCPU ? ['wasm'] : ['webgpu', 'webgl', 'wasm'];
+        
+        yoloSession = await ort.InferenceSession.create(currentModelUrl, {
+            executionProviders: providers,
             graphOptimizationLevel: 'all'
         });
+
+        usingGPU = !forceCPU;
         document.getElementById('model-loader-container').classList.add('hidden');
+        isModelReady = true;
         statusText.textContent = translations[currentLang].ready;
+        updateStartButtonState();
+        console.log(`Model Loaded. Provider: ${usingGPU ? 'GPU (Fast)' : 'CPU (Fallback)'}`);
         return true;
     } catch (e) {
-        console.error(e);
+        console.error("Model Load Error:", e);
+        if (!file && !forceCPU) {
+            // If GPU init failed, try auto-fallback to CPU immediately
+            console.warn("GPU Init failed, retrying with CPU...");
+            return loadModel(null, true);
+        }
         if (!file) modelLoaderContainer.classList.remove('hidden');
+        statusText.textContent = "Error Loading Model";
         return false;
     }
 }
@@ -231,12 +183,16 @@ function preprocess(sourceCanvas) {
     tC.width = w; tC.height = h;
     const tCtx = tC.getContext('2d', { willReadFrequently: true });
     tCtx.drawImage(sourceCanvas, 0, 0, w, h);
-    const { data } = tCtx.getImageData(0, 0, w, h);
-    const input = new Float32Array(1 * 3 * w * h);
-    for (let i = 0; i < w * h; i++) {
-        input[i] = data[i * 4] / 255.0;
-        input[i + w * h] = data[i * 4 + 1] / 255.0;
-        input[i + 2 * w * h] = data[i * 4 + 2] / 255.0;
+    
+    const imageData = tCtx.getImageData(0, 0, w, h).data;
+    const size = w * h;
+    const input = new Float32Array(3 * size);
+    const norm = 1.0 / 255.0;
+    
+    for (let i = 0; i < size; i++) {
+        input[i] = imageData[i * 4] * norm;           // R
+        input[i + size] = imageData[i * 4 + 1] * norm; // G
+        input[i + size * 2] = imageData[i * 4 + 2] * norm; // B
     }
     return new ort.Tensor('float32', input, [1, 3, w, h]);
 }
@@ -341,11 +297,33 @@ async function processAudio(file, muxer) {
         }
         await enc.flush();
         return true;
-    } catch (e) { console.warn("Audio error:", e); return false; }
+    } catch (e) { console.warn("Audio error (skipping):", e); return false; }
+}
+
+// ===== INFERENCE RUNNER (Crash Proof) =====
+async function runInferenceSafe(inputTensor) {
+    try {
+        return await yoloSession.run({ images: inputTensor });
+    } catch (error) {
+        // CATCH THE GPU ERROR
+        if (usingGPU) {
+            console.warn("GPU Crashed or Invalid Op! Switching to CPU fallback...");
+            statusText.textContent = translations[currentLang].switchingCPU;
+            
+            // Dispose broken session
+            try { await yoloSession.end(); } catch(e){}
+            
+            // Re-load model on CPU (WASM)
+            await loadModel(null, true);
+            
+            // Retry inference on CPU
+            return await yoloSession.run({ images: inputTensor });
+        }
+        throw error; // If CPU fails, we really have a problem
+    }
 }
 
 async function startVideoProcessing() {
-    // Stop blinking start, start processing state
     startBtn.classList.remove('blinking');
     startBtn.classList.add('hidden');
     cancelBtn.classList.remove('hidden');
@@ -387,6 +365,9 @@ async function startVideoProcessing() {
     const totalFrames = Math.floor(video.duration * fps);
     let frameIdx = 0; let lastTime = Date.now(); let frameCount = 0;
 
+    const SKIP_FRAMES = 5; 
+    let lastDetections = [];
+
     const waitForSeek = () => new Promise(resolve => {
         const h = () => { video.removeEventListener('seeked', h); resolve(); };
         video.addEventListener('seeked', h);
@@ -394,6 +375,7 @@ async function startVideoProcessing() {
 
     async function processFrame() {
         if (!isProcessing) { videoEncoder.close(); return; }
+        
         if (frameIdx >= totalFrames) {
             statusText.textContent = translations[currentLang].statusFinalizing;
             await videoEncoder.flush();
@@ -408,12 +390,11 @@ async function startVideoProcessing() {
             a.download = outputFilename;
             a.click();
 
-            // Finish State: Enable Download Again Blinking
             isProcessing = false;
             cancelBtn.classList.add('hidden');
             startBtn.classList.remove('hidden');
             downloadAgainBtn.classList.remove('hidden');
-            downloadAgainBtn.classList.add('blinking'); // START BLINKING
+            downloadAgainBtn.classList.add('blinking');
 
             progressFill.style.width = '100%';
             progressText.textContent = '100%';
@@ -426,12 +407,25 @@ async function startVideoProcessing() {
         await waitForSeek();
 
         ctx.drawImage(video, 0, 0, w, h);
-        const inputTensor = preprocess(canvas);
-        const results = await yoloSession.run({ images: inputTensor });
-        const detections = postProcess(results[Object.keys(results)[0]], w, h);
+
+        if (frameIdx % SKIP_FRAMES === 0) {
+            let inputTensor = null;
+            try {
+                inputTensor = preprocess(canvas);
+                
+                // Use the SAFE runner that handles crashes
+                const results = await runInferenceSafe(inputTensor);
+                
+                lastDetections = postProcess(results[Object.keys(results)[0]], w, h);
+            } catch (err) {
+                console.error("Frame dropped due to AI Error:", err);
+            } finally {
+                if(inputTensor) inputTensor.dispose();
+            }
+        }
 
         const strength = parseInt(blurStrength.value);
-        detections.forEach(det => {
+        lastDetections.forEach(det => {
             if ((detectFaces.checked && det.classId === 0) ||
                 (detectPlates.checked && det.classId === 2)) {
                 applyBlur(ctx, det.box, strength);
@@ -451,7 +445,7 @@ async function startVideoProcessing() {
 
         frameCount++;
         if (Date.now() - lastTime >= 1000) {
-            fpsText.textContent = frameCount + " FPS";
+            fpsText.textContent = frameCount + " FPS (" + (usingGPU ? "GPU" : "CPU") + ")";
             frameCount = 0; lastTime = Date.now();
         }
         setTimeout(processFrame, 0);
@@ -460,11 +454,11 @@ async function startVideoProcessing() {
 }
 
 // ===== Listeners =====
-// Init State: Blink Upload
 document.addEventListener('DOMContentLoaded', () => {
+    currentLang = document.documentElement.lang || 'fa';
     dropZone.classList.add('blinking');
     blurValue.textContent = "25";
-    loadModel();
+    loadModel(); 
 });
 
 inputVideoInput.addEventListener('change', (e) => {
@@ -472,18 +466,13 @@ inputVideoInput.addEventListener('change', (e) => {
     if (file) {
         selectedInputFile = file;
         fileNameDisplay.textContent = file.name;
-        dropZoneText.textContent = "Change Video"; // Update text
-
-        // State Change: Stop Upload Blink -> Start Start Blink
+        dropZoneText.textContent = "Change Video";
         dropZone.classList.remove('blinking');
         startBtn.classList.remove('hidden');
         startBtn.classList.add('blinking');
-        downloadAgainBtn.classList.add('hidden'); // Hide old download
+        downloadAgainBtn.classList.add('hidden');
         downloadAgainBtn.classList.remove('blinking');
-
-        // Update filename variable
         outputFilename = file.name.replace(/\.[^/.]+$/, "") + "_blurred.mp4";
-
         const url = URL.createObjectURL(file);
         previewPlayer.src = url;
         videoPreview.classList.remove('hidden');
@@ -491,18 +480,20 @@ inputVideoInput.addEventListener('change', (e) => {
             videoDuration.textContent = translations[currentLang].duration + " " + formatDuration(previewPlayer.duration);
             videoSize.textContent = translations[currentLang].size + " " + formatFileSize(file.size);
         };
-        if (!yoloSession) loadModel();
+        updateStartButtonState();
     }
 });
 
 startBtn.addEventListener('click', () => {
-    isProcessing = true;
-    startVideoProcessing();
+    if (!startBtn.disabled) {
+        isProcessing = true;
+        startVideoProcessing();
+    }
 });
 
 downloadAgainBtn.addEventListener('click', () => {
     if (lastBlobUrl) {
-        downloadAgainBtn.classList.remove('blinking'); // Stop blinking on click
+        downloadAgainBtn.classList.remove('blinking');
         const a = document.createElement('a');
         a.href = lastBlobUrl;
         a.download = outputFilename;
@@ -515,7 +506,7 @@ cancelBtn.addEventListener('click', () => {
     location.reload();
 });
 
-// Settings
+// Settings & Lang
 blurStrength.addEventListener('input', (e) => blurValue.textContent = e.target.value);
 confidence.addEventListener('input', (e) => confidenceValue.textContent = parseFloat(e.target.value).toFixed(2));
 pitchShift.addEventListener('input', (e) => {
