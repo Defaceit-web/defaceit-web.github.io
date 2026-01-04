@@ -166,7 +166,7 @@ This project is open-source. Feel free to fork, modify, and distribute it to hel
 
 ## 🤝 اعتبارات و حمایت
 
-*   **توسعه‌دهنده نسخه وب:** مشارکت‌کننده ناشناس (Daffy Duck)
+*   **توسعه‌دهنده نسخه وب:** مشارکت‌کننده ناشناس 
 *   **ایده اصلی و پایه:** با تشکر فراوان از [Shin](https://x.com/hey_itsmyturn) برای ایده و مفاهیم پایه.
 
 ### حمایت از خالق اصلی
