@@ -5,6 +5,8 @@
 
 Built with **privacy as the absolute priority**, this tool runs entirely on your device using WebAssembly and Neural Networks. **No video data is ever sent to a server.**
 
+# Defaceit is accessable on [Defaceit-web.github.io](https://Defaceit-web.github.io)
+
 ---
 
 ## 🔒 Security & Privacy Guarantee
