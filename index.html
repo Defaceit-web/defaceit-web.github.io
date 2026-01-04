@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DefaceIT - تار کردن چهره و پلاک در ویدیو</title>
+    <link rel="stylesheet" href="style.css">
+
+    <!-- MP4 Muxer -->
+    <script src="https://cdn.jsdelivr.net/npm/mp4-muxer@1.0.0/build/mp4-muxer.min.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <!-- Background Animation -->
+    <div class="background-animation">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo-section">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 5C13.66 5 15 6.34 15 8C15 9.66 13.66 11 12 11C10.34 11 9 9.66 9 8C9 6.34 10.34 5 12 5ZM12 19.2C9.5 19.2 7.29 17.92 6 15.98C6.03 13.99 10 12.9 12 12.9C13.99 12.9 17.97 13.99 18 15.98C16.71 17.92 14.5 19.2 12 19.2Z"
+                            fill="currentColor" />
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <h1>DefaceIT-Web</h1>
+                    <p class="subtitle" data-i18n="subtitle">تار کردن چهره و پلاک در ویدیو</p>
+                </div>
+            </div>
+            <div class="language-switch">
+                <button class="lang-btn active" data-lang="fa">فارسی</button>
+                <button class="lang-btn" data-lang="en">English</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+
+            <!-- NEW: Security Disclaimer Section -->
+            <section class="security-card glass-card">
+                <div class="security-icon-wrapper">
+                    <div class="security-icon">🛡️</div>
+                    <div class="security-pulse"></div>
+                </div>
+                <div class="security-content">
+                    <h3 class="security-title" data-i18n="securityTitle">🔒 تضمین امنیت و حریم خصوصی</h3>
+                    <p class="security-text" data-i18n="securityText">
+                        برای حفظ امنیت و ناشناس ماندن شما، تمامی پردازش‌ها به صورت <strong>۱۰۰٪ محلی و آفلاین</strong>
+                        (Client-Side) در مرورگر شما انجام می‌شود.
+                        <br>
+                        هیچ ویدیو یا داده‌ای هرگز از دستگاه شما خارج نمی‌شود و به هیچ سروری ارسال نمی‌گردد.
+                    </p>
+                    <a href="https://github.com/Defaceit-web/defaceit-web" target="_blank" class="security-link">
+                        <span class="icon">💻</span>
+                        <span data-i18n="verifyCode">بررسی کد منبع در گیت‌هاب (Open Source)</span>
+                    </a>
+                </div>
+            </section>
+
+            <!-- Progress Section (Kept Same) -->
+            <section class="progress-section glass-card">
+                <h2 class="section-title">
+                    <span class="icon">📊</span>
+                    <span data-i18n="progress">پیشرفت</span>
+                </h2>
+
+                <div class="progress-container">
+                    <div class="progress-bar-wrapper">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                            <span class="progress-text" id="progress-text" data-i18n="ready">آماده</span>
+                        </div>
+                    </div>
+
+                    <div class="progress-stats">
+                        <div class="stat-item">
+                            <span class="stat-label" data-i18n="status">وضعیت:</span>
+                            <span class="stat-value" id="status-text" data-i18n="readyToProcess">آماده برای
+                                پردازش</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label" data-i18n="speed">سرعت:</span>
+                            <span class="stat-value" id="fps-text">-- FPS</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button id="start-btn" class="btn-primary hidden">
+                        <span class="icon">▶️</span>
+                        <span id="start-btn-text" data-i18n="startProcessing">شروع پردازش</span>
+                    </button>
+
+                    <button id="download-again-btn" class="btn-success hidden">
+                        <span class="icon">⬇️</span>
+                        <span data-i18n="downloadAgain">دانلود مجدد</span>
+                    </button>
+
+                    <button id="cancel-btn" class="btn-danger hidden">
+                        <span class="icon">⏹️</span>
+                        <span data-i18n="cancel">لغو</span>
+                    </button>
+                </div>
+            </section>
+
+
+
+
+            <!-- File Upload Section (NEW DESIGN) -->
+            <section class="upload-section glass-card">
+                <h2 class="section-title">
+                    <span class="icon">📹</span>
+                    <span data-i18n="selectFile">انتخاب فایل</span>
+                </h2>
+
+                <!-- New Big Drop Zone -->
+                <div class="upload-container">
+                    <label for="input-video" class="file-drop-zone" id="drop-zone">
+                        <div class="drop-content">
+                            <span class="drop-icon">📂</span>
+                            <span class="drop-text" id="drop-zone-text" data-i18n="dropText">برای انتخاب ویدیو کلیک
+                                کنید</span>
+                            <span class="drop-subtext" id="file-name-display"></span>
+                        </div>
+                        <input type="file" id="input-video" accept="video/*" hidden>
+                    </label>
+                </div>
+
+                <!-- Video Preview -->
+                <div id="video-preview" class="video-preview hidden">
+                    <video id="preview-player" controls></video>
+                    <div class="video-info">
+                        <span id="video-duration"></span>
+                        <span id="video-size"></span>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- Settings Section (Kept Same) -->
+            <section class="settings-section glass-card">
+                <h2 class="section-title">
+                    <span class="icon">⚙️</span>
+                    <span data-i18n="settings">تنظیمات</span>
+                </h2>
+
+                <!-- Hidden Model Loader -->
+                <div id="model-loader-container" class="setting-item full-width hidden"
+                    style="background: rgba(255, 59, 59, 0.1); border: 1px solid rgba(255, 59, 59, 0.3);">
+                    <label class="setting-label" style="color: #ff6b6b;">
+                        <span id="model-error-text">⚠️ خطا. لطفا مدل را دستی انتخاب کنید:</span>
+                    </label>
+                    <label for="model-upload" class="browse-btn" style="width: 100%; text-align: center;">
+                        <span id="load-model-text">انتخاب yolo11n.onnx...</span>
+                        <input type="file" id="model-upload" accept=".onnx" hidden>
+                    </label>
+                </div>
+
+                <div class="settings-grid">
+                    <!-- Blur Strength (Default 25) -->
+                    <div class="setting-item">
+                        <label class="setting-label">
+                            <span data-i18n="blurStrength">قدرت تار کردن:</span>
+                            <span class="setting-value" id="blur-value">25</span>
+                        </label>
+                        <input type="range" id="blur-strength" min="10" max="100" step="1" value="25" class="slider">
+                        <div class="slider-labels">
+                            <span data-i18n="low">کم</span>
+                            <span data-i18n="high">زیاد</span>
+                        </div>
+                    </div>
+
+                    <!-- Confidence -->
+                    <div class="setting-item">
+                        <label class="setting-label">
+                            <span data-i18n="confidence">اعتماد:</span>
+                            <span class="setting-value" id="confidence-value">0.15</span>
+                        </label>
+                        <input type="range" id="confidence" min="0.05" max="0.5" step="0.01" value="0.15"
+                            class="slider">
+                        <div class="slider-labels">
+                            <span>0.05</span>
+                            <span>0.5</span>
+                        </div>
+                    </div>
+
+                    <!-- Blur Type -->
+                    <div class="setting-item">
+                        <label class="setting-label" data-i18n="blurType">نوع تار کردن:</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="blur-type" value="gaussian">
+                                <span class="radio-custom"></span>
+                                <span data-i18n="gaussian">گاوسی</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="blur-type" value="pixelate" checked>
+                                <span class="radio-custom"></span>
+                                <span data-i18n="pixelate">پیکسلی</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Detection Options -->
+                    <div class="setting-item">
+                        <label class="setting-label" data-i18n="detect">تشخیص:</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="detect-faces" checked>
+                                <span class="checkbox-custom"></span>
+                                <span data-i18n="faces">چهره‌ها</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="detect-plates" checked>
+                                <span class="checkbox-custom"></span>
+                                <span data-i18n="plates">پلاک‌ها</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Device Selection -->
+                    <div class="setting-item">
+                        <label class="setting-label" data-i18n="device">دستگاه:</label>
+                        <select id="device" class="select-input">
+                            <option value="auto" data-i18n="auto">خودکار</option>
+                            <option value="cpu" data-i18n="cpu">پردازنده (CPU)</option>
+                            <option value="gpu" data-i18n="gpu">کارت گرافیک (GPU)</option>
+                        </select>
+                    </div>
+
+                    <!-- Audio Pitch Shift -->
+                    <div class="setting-item full-width">
+                        <label class="setting-label">
+                            <span data-i18n="pitchShift">تغییر زیر و بم صدا:</span>
+                            <span class="setting-value" id="pitch-value">0</span>
+                            <span class="unit" data-i18n="semitones">نیم‌پرده</span>
+                        </label>
+                        <input type="range" id="pitch-shift" min="-12" max="12" step="1" value="0" class="slider">
+                        <div class="slider-labels">
+                            <span>-12</span>
+                            <span>0</span>
+                            <span>+12</span>
+                        </div>
+                        <div class="audio-preview-controls">
+                            <button id="preview-audio-btn" class="btn-secondary" disabled>
+                                <span class="icon">🔊</span>
+                                <span data-i18n="previewAudio">پیش‌نمایش صدا</span>
+                            </button>
+                            <button id="stop-preview-btn" class="btn-secondary hidden">
+                                <span class="icon">⏹️</span>
+                                <span data-i18n="stopPreview">توقف پیش‌نمایش</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Credits Section -->
+            <section class="credits-section glass-card">
+                <h2 class="section-title">
+                    <span class="icon">‍💻</span>
+                    <span data-i18n="credits">توسعه دهندگان</span>
+                </h2>
+
+                <div class="credits-content">
+                    <div class="developer-info">
+                        <div class="anon-contributor">
+                            <img src="Unknown-Iranian.png" alt="Anonymous" class="anon-avatar">
+                            <p class="developer-name">
+                                <strong data-i18n="webDeveloper">ساخته شده با ❤️ توسط:</strong>
+                                <span class="anon-name" data-i18n="anonContributor">یک ایرانی ناشناس</span>
+                                <span data-i18n="webDeveloper"> برای ایران</span>
+
+                            </p>
+                        </div>
+                        <p class="thanks-note" data-i18n="thanksNote">با تشکر از <a href="https://x.com/hey_itsmyturn"
+                                target="_blank" class="link">Shin</a> برای ساخت پایه این پروژه</p>
+                    </div>
+
+                    <div class="donate-section">
+                        
+
+
+                        <!-- Social Links -->
+                        <div class="social-links" style="margin-top: 1rem;">
+                            
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+        <footer class="footer">
+            <p data-i18n="footerText">نسخه وب توسط ناشناس | نسخه 1.0.0</p>
+        </footer>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden">
+        <span id="toast-message"></span>
+    </div>
+
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.0/dist/ort.min.js"></script>
+    <script src="https://docs.opencv.org/4.8.0/opencv.js" async></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
