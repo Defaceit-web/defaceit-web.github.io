@@ -457,7 +457,7 @@ async function startVideoProcessing() {
 document.addEventListener('DOMContentLoaded', () => {
     currentLang = document.documentElement.lang || 'fa';
     dropZone.classList.add('blinking');
-    blurValue.textContent = "25";
+    blurValue.textContent = "15";
     loadModel(); 
 });
 
@@ -522,4 +522,5 @@ langButtons.forEach(btn => btn.addEventListener('click', () => {
     updatePageLanguage(currentLang);
 }));
 document.addEventListener('dragover', (e) => e.preventDefault());
+
 document.addEventListener('drop', (e) => e.preventDefault());
